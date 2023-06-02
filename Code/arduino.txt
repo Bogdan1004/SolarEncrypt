@@ -1,0 +1,94 @@
+#include <Servo.h>
+int R1; //Top left
+int R2; //Top right
+int R3; //Bottom left
+int R4; //Bottom right
+int pos = 90;
+
+Servo servo1;
+Servo servo2;
+
+//photoresistor
+const int pR1 = A1;
+const int pR2 = A2;
+const int pR3 = A3;
+const int pR4 = A4;
+
+//servos
+const int sV1 = 6;
+const int sV2 = 7;
+
+void setup() {
+  //intialising pR
+  pinMode(pR1, INPUT);
+  pinMode(pR2, INPUT);
+  pinMode(pR3, INPUT);
+  pinMode(pR4, INPUT);
+
+  //initialising sV
+  servo1.attach(sV1);
+  servo2.attach(sV2);
+  servo1.write(pos);
+  servo2.write(pos);
+
+  //Opening SerialMonitor
+  Serial.begin(9600);
+}
+
+void loop() {
+  //Reading pR data
+  R1 = analogRead(pR1);
+  R2 = analogRead(pR2);
+  R3 = analogRead(pR3);
+  R4 = analogRead(pR4);
+  Serial.print("\n");   
+  Serial.print("pR1: ");
+  Serial.print(R1);
+  Serial.print("\n");
+  Serial.print("pR2: ");
+  Serial.print(R2);
+  Serial.print("\n");
+  Serial.print("pR3: ");
+  Serial.print(R3);
+  Serial.print("\n");
+  Serial.print("pR4: ");
+  Serial.print(R4);
+  Serial.print("\n");
+  delay(1000);
+
+
+  //Moving the servos
+  //Counter CLK ->180 SV1 = DW SV2 = LEFT
+  //CLK ->0  SV1 = UP SV2 = RIGHT
+  
+  //SV2
+  //If the left side is darker rotate to the RIGHT
+  if(R1 > R2 && R3 > R4 && pos > 0){
+    pos--;
+    servo2.write(pos);
+    delay(10);
+  }
+  //If the right side is darker rotate to the left LEFT
+  if(R2 > R1 && R4 > R3 && pos < 180 ){
+    pos++;
+    servo2.write(pos);
+    delay(10);
+  }
+  
+
+  //SV1
+  //If the lower side is darker move UP
+  if(R3 > R1 && R4 > R2 && pos > 0){
+    pos--;
+    servo1.write(pos);
+    delay(10);
+  }
+  //If the upside is darker move DOWN
+  if(R1 > R3 && R2 > R4 && pos < 180 ){
+    pos++;
+    servo1.write(pos);
+    delay(10);
+  }
+
+
+}

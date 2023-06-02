@@ -1,0 +1,105 @@
+import RPi.GPIO as GPIO
+import os
+from http.server import BaseHTTPRequestHandler, HTTPServer
+from gpiozero import AngularServo
+from time import sleep
+
+host_name = ''  # IP Address of Raspberry Pi
+host_port = 8000
+
+
+def setupGPIO():
+    GPIO.setmode(GPIO.BCM)
+    GPIO.setwarnings(False)
+
+    GPIO.setup( , GPIO.OUT)  #Servo1
+    servo1 = AngularServo(, min_pulse_width=0.0005, max_pulse_width=0.0025)#Servo1
+    GPIO.setup( , GPIO.OUT)#Servo2
+    servo2 = AngularServo( , min_pulse_width=0.0005, max_pulse_width=0.0025)#Servo2
+
+def getTemperature():
+    temp = os.popen("/opt/vc/bin/vcgencmd measure_temp").read()
+    return temp
+
+
+class MyServer(BaseHTTPRequestHandler):
+
+    def do_HEAD(self):
+        self.send_response(200)
+        self.send_header('Content-type', 'text/html')
+        self.end_headers()
+
+    def _redirect(self, path):
+        self.send_response(303)
+        self.send_header('Content-type', 'text/html')
+        self.send_header('Location', path)
+        self.end_headers()
+
+    def do_GET(self):
+        html = '''
+           <html>
+           <body 
+            style="width:960px; margin: 20px auto;">
+           <h1>Raspberry Pi Servo Control</h1>
+           <p>Current GPU temperature is {}</p>
+           <form action="/" method="POST">
+               Turn Servos :
+               <input type="submit" name="submit" value="15">
+               <input type="submit" name="submit" value="30">
+               <input type="submit" name="submit" value="45">
+               <input type="submit" name="submit" value="60">
+               <input type="submit" name="submit" value="75">
+               <input type="submit" name="submit" value="90">
+           </form>
+           </body>
+           </html>
+        '''
+        temp = getTemperature()
+        self.do_HEAD()
+        self.wfile.write(html.format(temp[5:]).encode("utf-8"))
+
+    def do_POST(self):
+
+        content_length = int(self.headers['Content-Length'])
+        post_data = self.rfile.read(content_length).decode("utf-8")
+        post_data = post_data.split("=")[1]
+
+        setupGPIO()
+        if post_data == '15':
+            servo1.angle = 15
+            servo2.angle = 15
+            sleep(2)
+        elif post_data == '30':
+            servo1.angle = 30
+            servo2.angle = 30
+            sleep(2)
+        elif post_data == '45':
+            servo1.angle = 45
+            servo2.angle = 45
+            sleep(2)
+        elif post_data == '60':
+            servo1.angle = 60
+            servo2.angle = 60
+            sleep(2)
+        elif post_data == '75':
+            servo1.angle = 75
+            servo2.angle = 75
+            sleep(2)
+        elif post_data == '90':
+            servo1.angle = 90
+            servo2.angle = 90
+            sleep(2)
+
+        self._redirect('/')  # Redirect back to the root url
+
+
+# # # # # Main # # # # #
+
+if _name_ == '_main_':
+    http_server = HTTPServer((host_name, host_port), MyServer)
+    print("Server Starts - %s:%s" % (host_name, host_port))
+
+    try:
+        http_server.serve_forever()
+    except KeyboardInterrupt:
+        http_server.server_close()
